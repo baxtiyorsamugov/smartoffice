@@ -1,0 +1,66 @@
+import os
+import urllib.parse
+
+
+def _get_int(name, default):
+    value = os.getenv(name)
+    return int(value) if value else default
+
+
+def _get_float(name, default):
+    value = os.getenv(name)
+    return float(value) if value else default
+
+
+def _get_bool(name, default):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+DB_CONFIG = {
+    "host": os.getenv("SMARTOFFICE_DB_HOST", "localhost"),
+    "user": os.getenv("SMARTOFFICE_DB_USER", "root"),
+    "password": os.getenv("SMARTOFFICE_DB_PASSWORD", ""),
+    "database": os.getenv("SMARTOFFICE_DB_NAME", "smart_office"),
+}
+
+CAMERA_USER = os.getenv("SMARTOFFICE_CAMERA_USER", "admin")
+CAMERA_PASSWORD = urllib.parse.quote(os.getenv("SMARTOFFICE_CAMERA_PASSWORD", "2303323#yumh"))
+CAMERA_IP = os.getenv("SMARTOFFICE_CAMERA_IP", "192.168.0.2")
+RTSP_URL = os.getenv(
+    "SMARTOFFICE_RTSP_URL",
+    f"rtsp://{CAMERA_USER}:{CAMERA_PASSWORD}@{CAMERA_IP}:554/Streaming/Channels/101",
+)
+
+TELEGRAM_TOKEN = os.getenv("SMARTOFFICE_TELEGRAM_TOKEN", "8598018949:AAHh2uRX28g8Xji--blDzIfzYAD_R_JHWQw")
+TELEGRAM_CHAT_ID = os.getenv("SMARTOFFICE_TELEGRAM_CHAT_ID", "372688693")
+
+WEEKLY_REPORT_DAY = os.getenv("SMARTOFFICE_WEEKLY_DAY", "mon")
+WEEKLY_REPORT_HOUR = _get_int("SMARTOFFICE_WEEKLY_HOUR", 9)
+WEEKLY_REPORT_MINUTE = _get_int("SMARTOFFICE_WEEKLY_MINUTE", 30)
+MONTHLY_REPORT_DAY = _get_int("SMARTOFFICE_MONTHLY_DAY", 1)
+MONTHLY_REPORT_HOUR = _get_int("SMARTOFFICE_MONTHLY_HOUR", 9)
+MONTHLY_REPORT_MINUTE = _get_int("SMARTOFFICE_MONTHLY_MINUTE", 30)
+
+MODEL_PATH = os.getenv("SMARTOFFICE_FACE_MODEL", "yolov8n-face.pt")
+DETECT_WIDTH = _get_int("SMARTOFFICE_DETECT_WIDTH", 640)
+DETECT_HEIGHT = _get_int("SMARTOFFICE_DETECT_HEIGHT", 360)
+DISPLAY_WIDTH = _get_int("SMARTOFFICE_DISPLAY_WIDTH", 1280)
+DISPLAY_HEIGHT = _get_int("SMARTOFFICE_DISPLAY_HEIGHT", 720)
+DETECT_CONF = _get_float("SMARTOFFICE_DETECT_CONF", 0.40)
+MATCH_THRESHOLD = _get_float("SMARTOFFICE_MATCH_THRESHOLD", 0.38)
+MIN_FACE_SIZE = _get_int("SMARTOFFICE_MIN_FACE_SIZE", 56)
+LOG_COOLDOWN_SECONDS = _get_int("SMARTOFFICE_LOG_COOLDOWN_SECONDS", 90)
+TRACK_RECHECK_SECONDS = _get_float("SMARTOFFICE_TRACK_RECHECK_SECONDS", 1.0)
+TRACK_TTL_SECONDS = _get_float("SMARTOFFICE_TRACK_TTL_SECONDS", 12.0)
+FACE_MARGIN = _get_int("SMARTOFFICE_FACE_MARGIN", 28)
+FRAME_QUEUE_SIZE = _get_int("SMARTOFFICE_FRAME_QUEUE_SIZE", 3)
+FACE_QUEUE_SIZE = _get_int("SMARTOFFICE_FACE_QUEUE_SIZE", 16)
+RECOGNITION_WORKERS = _get_int("SMARTOFFICE_RECOGNITION_WORKERS", 1)
+MAX_NEW_RECOGNITIONS_PER_FRAME = _get_int("SMARTOFFICE_MAX_NEW_RECOGNITIONS_PER_FRAME", 6)
+GREETING_ENABLED = _get_bool("SMARTOFFICE_GREETING_ENABLED", True)
+GREETING_MORNING_START_HOUR = _get_int("SMARTOFFICE_GREETING_MORNING_START_HOUR", 6)
+GREETING_MORNING_END_HOUR = _get_int("SMARTOFFICE_GREETING_MORNING_END_HOUR", 17)
+GREETING_AUDIO_DIR = os.getenv("SMARTOFFICE_GREETING_AUDIO_DIR", "audio/greetings")

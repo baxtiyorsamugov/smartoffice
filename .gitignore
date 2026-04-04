@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.idea/
+tmp_install/
+
+reports/
+logs/
+archive/
+
+venv/
+
+.env
