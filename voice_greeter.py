@@ -36,6 +36,7 @@ class VoiceGreeter:
         self.name_map = self._load_name_map()
         self._ensure_dirs()
         self._load_today_state()
+        self.birthdays = self._load_birthdays()
 
         if self.enabled:
             threading.Thread(target=self._worker, daemon=True).start()
@@ -64,6 +65,21 @@ class VoiceGreeter:
             print(f"Greeting state load failed: {exc}")
             self.greeted_today = set()
 
+    def _load_birthdays(self):
+        """Загружает дни рождения из MySQL"""
+        import mysql.connector
+        from database import db_config
+        bdays = {}
+        try:
+            conn = mysql.connector.connect(**db_config)
+            cursor = conn.cursor()
+            cursor.execute("SELECT name, birth_date FROM staff_embeddings")
+            for name, bday in cursor.fetchall():
+                if bday: bdays[name] = bday  # Ожидаем формат 'MM-DD', например '04-06'
+            conn.close()
+        except Exception as e:
+            print(f"Failed to load birthdays: {e}")
+        return bdays
 
     def _morning_window(self):
         return (
@@ -89,24 +105,49 @@ class VoiceGreeter:
             return mapped
         return name
 
-
     def _resolve_audio_sequence(self, name):
         stem = self._resolve_stem(name)
         candidates = [stem, _slugify(stem)]
+        final_sequence = []
+        audio_key = None
 
+        # 1. Ищем стандартное приветствие (как и раньше)
+        found_base = False
         for candidate in candidates:
             full_path = self.base_dir / "full" / f"{candidate}.wav"
             if full_path.exists():
-                return [full_path], candidate
+                final_sequence = [full_path]
+                audio_key = candidate
+                found_base = True
+                break
 
-        common_intro = self.base_dir / "common" / "intro.wav"
-        common_outro = self.base_dir / "common" / "outro.wav"
-        for candidate in candidates:
-            name_clip = self.base_dir / "names" / f"{candidate}.wav"
-            if common_intro.exists() and common_outro.exists() and name_clip.exists():
-                return [common_intro, name_clip, common_outro], candidate
+        if not found_base:
+            common_intro = self.base_dir / "common" / "intro.wav"
+            common_outro = self.base_dir / "common" / "outro.wav"
+            for candidate in candidates:
+                name_clip = self.base_dir / "names" / f"{candidate}.wav"
+                if common_intro.exists() and common_outro.exists() and name_clip.exists():
+                    final_sequence = [common_intro, name_clip, common_outro]
+                    audio_key = candidate
+                    found_base = True
+                    break
 
-        return None, None
+        if not found_base:
+            return None, None
+
+        # 2. ДОБАВЛЯЕМ ДЕНЬ РОЖДЕНИЯ (Если сегодня тот самый день)
+        today_md = datetime.now().strftime("%m-%d")  # Получаем '04-06'
+        if self.birthdays.get(name) == today_md:
+            wish_clip = self.base_dir / "birthday" / "wish.wav"  # "Поздравляем..."
+            music_clip = self.base_dir / "birthday" / "music.wav"  # Happy Birthday
+
+            if wish_clip.exists():
+                final_sequence.append(wish_clip)
+            if music_clip.exists():
+                final_sequence.append(music_clip)
+            print(f"🥳 СЕГОДНЯ ДЕНЬ РОЖДЕНИЯ У {name}! Праздничная музыка добавлена.")
+
+        return final_sequence, audio_key
 
 
     def _play_sequence(self, sequence):
