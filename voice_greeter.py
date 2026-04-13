@@ -107,6 +107,8 @@ class VoiceGreeter:
 
     def _resolve_audio_sequence(self, name):
         stem = self._resolve_stem(name)
+        today_md = datetime.now().strftime("%m-%d")
+        print(f"DEBUG: Проверка ДР для {name}. Сегодня: {today_md}, В базе у него: {self.birthdays.get(name)}")
         candidates = [stem, _slugify(stem)]
         final_sequence = []
         audio_key = None
